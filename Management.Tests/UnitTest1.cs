@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using System.Text;
+using System.Text.Json;
 
 namespace Management.Tests;
 public class UnitTest1 : IClassFixture<ApplicationTestFixture>
@@ -14,10 +16,18 @@ public class UnitTest1 : IClassFixture<ApplicationTestFixture>
     }
 
     [Fact]
-    public async Task Get_Method_Return_Ok()
+    public async Task Post_Method_Return_Created()
     {
-        HttpResponseMessage result = await _client.GetAsync("/weatherforecast");
-        result.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+        //Arrange
+        string contractNumber = Guid.NewGuid().ToString();
+        Financing financing = new Financing(contractNumber);
+        string serialized = JsonSerializer.Serialize(financing);
+        StringContent content = new StringContent(serialized, Encoding.UTF8, "application/json");
+        //Act
+        HttpResponseMessage result = await _client.PostAsync(ManagementApiConfig.Endpoints.POST,
+            content);
+        //Assert
+        result.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
     }
 }
 public class ApplicationTestFixture : WebApplicationFactory<Program>, IAsyncLifetime
