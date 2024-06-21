@@ -7,3 +7,13 @@ Content-Type: application/json
     "ContractNumber": "ACF"
 }
 ###
+
+POST {{Managemt.Api_HostAddress}}/pagamentos
+Content-Type: application/json
+
+{
+    "NumeroContrato": "ACF",
+    "Preco": 1.99,
+    "Quantidade": 1
+}
+###

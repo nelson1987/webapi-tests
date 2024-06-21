@@ -1,13 +1,26 @@
 ﻿using AutoMapper;
-using System.Net;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Managemt.Api.Features.Pagamentos;
+
+public static class PagamentoDependencies
+{
+    public static IServiceCollection AddPagamentoService(this IServiceCollection services)
+    {
+        services.AddAutoMapper(typeof(PagamentoMapping));
+        services.AddScoped<IPagamentoHandler, PagamentoHandler>();
+        services.AddScoped<IPagamentoRepository, PagamentoRepository>();
+        return services;
+    }
+}
 
 public class PagamentoMapping : Profile
 {
     public PagamentoMapping()
     {
-        CreateMap<PagamentoCommand, Pagamento>();
+        CreateMap<PagamentoCommand, Pagamento>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.IdEstoque, opt => opt.Ignore());
     }
 }
 
@@ -32,6 +45,7 @@ public class PagamentoRepository : IPagamentoRepository
     public async Task<Pagamento> Inserir(Pagamento entity, CancellationToken cancellationToken = default)
     {
         if (entity.Id != 0) throw new NotImplementedException("whatever");
+        entity.Id = 1;
         return await Task.FromResult(entity);
     }
 }
@@ -52,14 +66,16 @@ public class PagamentoHandler : IPagamentoHandler
 
     public async Task<Pagamento> Handler(PagamentoCommand command, CancellationToken cancellationToken = default)
     {
-        //TODO: Pagamento entity = command.MapTo<Pagamento>();
-        Pagamento entity = new Pagamento() { NumeroContrato = command.NumeroContrato, Preco = command.Preco, Quantidade = command.Quantidade };
+        Pagamento entity = command.MapTo<Pagamento>();
         var result = await _pagamentoRepository.Inserir(entity, cancellationToken);
         return await Task.FromResult(result);
     }
 }
 
-public class PagamentoController
+[ApiController]
+[Consumes("application/json")]
+[Route("/pagamentos")]
+public class PagamentoController : ControllerBase
 {
     private readonly IPagamentoHandler _pagamentoHandler;
 
@@ -68,16 +84,17 @@ public class PagamentoController
         _pagamentoHandler = pagamentoHandler;
     }
 
-    public async Task<HttpStatusCode> Post(PagamentoCommand command, CancellationToken cancellationToken = default)
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] PagamentoCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
             Pagamento pagamento = await _pagamentoHandler.Handler(command, cancellationToken);
-            return HttpStatusCode.Created;
+            return Created($"/{pagamento.Id}", null);
         }
         catch (Exception)
         {
-            return HttpStatusCode.InternalServerError;
+            return BadRequest();
         }
     }
 }

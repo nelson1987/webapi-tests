@@ -1,6 +1,8 @@
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using AutoMapper;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Net;
 
@@ -14,42 +16,73 @@ namespace Management.Domain.Tests;
 //    {
 //    }
 //}
-
 [Trait("Category", "UnitTests")]
-public class PagamentoControllerUnitTest
+public class PagamentoMappingTests
 {
     private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
-    private readonly PagamentoController _sut;
     private readonly PagamentoCommand _command;
-    private readonly CancellationToken _token = CancellationToken.None;
-    private readonly Mock<IPagamentoHandler> _mockHandler;
+    private readonly IMapper _mapper;
+    private readonly MapperConfiguration _config;
 
-    public PagamentoControllerUnitTest()
+    public PagamentoMappingTests()
     {
-        _mockHandler = _fixture.Freeze<Mock<IPagamentoHandler>>();
-        _fixture.Freeze<Mock<IPagamentoHandler>>()
-                .Setup(x => x.Handler(It.IsAny<PagamentoCommand>(), _token))
-                .ReturnsAsync(new Pagamento());
-
+        _config = new MapperConfiguration(cfg =>
+            cfg.AddProfile(typeof(PagamentoMapping))
+        );
+        _mapper = _config.CreateMapper();
         _command = _fixture.Create<PagamentoCommand>();
-        _sut = _fixture.Create<PagamentoController>();
     }
 
     [Fact]
-    public async Task Dado_Commando_Valido_Retorna_Created()
+    public void ConfigurationTest()
     {
-        var result = await _sut.Post(_command, _token);
-        result.Should().Be(HttpStatusCode.Created);
+        _config.AssertConfigurationIsValid();
     }
 
     [Fact]
-    public async Task Dado_Exception_Retorna_Created()
+    public void CommandToEntityTest()
     {
-        _fixture.Freeze<Mock<IPagamentoHandler>>()
-                .Setup(x => x.Handler(It.IsAny<PagamentoCommand>(), _token))
-                .ThrowsAsync(new NotImplementedException("whatever"));
-        var result = await _sut.Post(_command, _token);
-        result.Should().Be(HttpStatusCode.InternalServerError);
+        var destination = _mapper.Map<Pagamento>(_command);
+        destination.Should().NotBeNull();
+
+        destination.Id.Should().Be(0);
+        destination.IdEstoque.Should().Be(0);
+        destination.NumeroContrato.Should().Be(_command.NumeroContrato);
+        destination.Preco.Should().Be(_command.Preco);
+        destination.Quantidade.Should().Be(_command.Quantidade);
+    }
+}
+
+[Trait("Category", "UnitTests")]
+public class PagamentoRepositoryUnitTest
+{
+    private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
+    private readonly PagamentoRepository _sut;
+    private readonly Pagamento _entity;
+    private readonly CancellationToken _token = CancellationToken.None;
+
+    public PagamentoRepositoryUnitTest()
+    {
+        _entity = _fixture.Build<Pagamento>()
+            .With(x => x.Id, 0)
+            .Create();
+        _sut = _fixture.Create<PagamentoRepository>();
+    }
+
+    [Fact]
+    public async Task Insercao_Valida_Retorna_Entitidade_Criada()
+    {
+        var result = await _sut.Inserir(_entity, _token);
+        result.Should().BeSameAs(_entity);
+    }
+
+    [Fact]
+    public async Task Insercao_Invalida_Se_Id_Diferente_Zero()
+    {
+        _entity.Id = 1;
+        Func<Task> result = async () => await _sut.Inserir(_entity, _token);
+        await result.Should().ThrowAsync<NotImplementedException>()
+            .WithMessage("whatever");
     }
 }
 
@@ -91,35 +124,44 @@ public class PagamentoHandlerUnitTest
 }
 
 [Trait("Category", "UnitTests")]
-public class PagamentoRepositoryUnitTest
+public class PagamentoControllerUnitTest
 {
     private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
-    private readonly PagamentoRepository _sut;
-    private readonly Pagamento _entity;
+    private readonly PagamentoController _sut;
+    private readonly PagamentoCommand _command;
     private readonly CancellationToken _token = CancellationToken.None;
+    private readonly Mock<IPagamentoHandler> _mockHandler;
 
-    public PagamentoRepositoryUnitTest()
+    public PagamentoControllerUnitTest()
     {
-        _entity = _fixture.Build<Pagamento>()
-            .With(x => x.Id, 0)
+        _mockHandler = _fixture.Freeze<Mock<IPagamentoHandler>>();
+        _fixture.Freeze<Mock<IPagamentoHandler>>()
+                .Setup(x => x.Handler(It.IsAny<PagamentoCommand>(), _token))
+                .ReturnsAsync(new Pagamento());
+
+        _command = _fixture.Create<PagamentoCommand>();
+        _sut = _fixture.Build<PagamentoController>()
+            .OmitAutoProperties()
             .Create();
-        _sut = _fixture.Create<PagamentoRepository>();
     }
 
     [Fact]
-    public async Task Insercao_Valida_Retorna_Entitidade_Criada()
+    public async Task Dado_Commando_Valido_Retorna_Created()
     {
-        var result = await _sut.Inserir(_entity, _token);
-        result.Should().BeSameAs(_entity);
+        var result = await _sut.Post(_command, _token);
+        var createdResult = (ObjectResult)result;
+        createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
     }
 
     [Fact]
-    public async Task Insercao_Invalida_Se_Id_Diferente_Zero()
+    public async Task Dado_Exception_Retorna_Created()
     {
-        _entity.Id = 1;
-        Func<Task> result = async () => await _sut.Inserir(_entity, _token);
-        await result.Should().ThrowAsync<NotImplementedException>()
-            .WithMessage("whatever");
+        _fixture.Freeze<Mock<IPagamentoHandler>>()
+                .Setup(x => x.Handler(It.IsAny<PagamentoCommand>(), _token))
+                .ThrowsAsync(new NotImplementedException("whatever"));
+        var result = await _sut.Post(_command, _token);
+        var createdResult = (BadRequestResult)result;
+        createdResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
     }
 }
 
