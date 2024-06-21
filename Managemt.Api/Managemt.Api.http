@@ -1,6 +1,9 @@
 @Managemt.Api_HostAddress = http://localhost:5175
 
-GET {{Managemt.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{Managemt.Api_HostAddress}}/financing/
+Content-Type: application/json
 
+{
+    "ContractNumber": "ACF"
+}
 ###
