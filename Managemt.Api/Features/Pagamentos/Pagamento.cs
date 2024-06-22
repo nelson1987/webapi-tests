@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
+
 using FluentValidation;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -95,6 +97,7 @@ public class PagamentoHandler : IPagamentoHandler
     {
         Pagamento entity = command.MapTo<Pagamento>();
         var result = await _pagamentoRepository.Inserir(entity, cancellationToken);
+
         return await Task.FromResult(result);
     }
 }
@@ -130,7 +133,7 @@ public class PagamentoController : ControllerBase
         {
             var validation = await _validator.ValidateAsync(command, cancellationToken);
             if (validation.IsInvalid())
-                return UnprocessableEntity(validation.ToModelState());
+                return BadRequest(validation.ToModelState());
 
             Pagamento pagamento = await _pagamentoHandler.HandleAsync(command, cancellationToken);
             return Created($"/{pagamento.Id}", null);

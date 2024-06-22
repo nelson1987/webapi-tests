@@ -1,13 +1,19 @@
+using System.Net;
+
 using AutoFixture;
 using AutoFixture.AutoMoq;
+
 using AutoMapper;
+
 using FluentAssertions;
+
 using FluentValidation;
 using FluentValidation.Results;
 using FluentValidation.TestHelper;
+
 using Microsoft.AspNetCore.Mvc;
+
 using Moq;
-using System.Net;
 
 namespace Management.Domain.Tests;
 
@@ -88,6 +94,17 @@ public class PagamentoRepositoryUnitTest
         await result.Should().ThrowAsync<NotImplementedException>()
             .WithMessage("whatever");
     }
+
+    [Fact]
+    public async Task Insercao_Invalida_Se_Entidade_Existir()
+    {
+        var result = await _sut.Inserir(_entity, _token);
+        result.Should().BeSameAs(_entity);
+    }
+
+    //TODO: Duplicado
+
+    //_repository.AddAsync(Arg.Any<Contributor>(), Arg.Any<CancellationToken>())
 }
 
 [Trait("Category", "UnitTests")]
@@ -217,8 +234,8 @@ public class PagamentoControllerUnitTest
                 .ReturnsAsync(new ValidationResult(new[] { new ValidationFailure("any-prop", "any-error-message") }));
 
         var result = await _sut.Post(_command, _token);
-        var createdResult = (UnprocessableEntityObjectResult)result;
-        createdResult.StatusCode.Should().Be((int)HttpStatusCode.UnprocessableEntity);
+        var createdResult = (BadRequestObjectResult)result;
+        createdResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
         _mockHandler.Verify(x => x.HandleAsync(It.IsAny<PagamentoCommand>(), _token), Times.Never);
     }
 
