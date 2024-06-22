@@ -40,6 +40,9 @@ public class PagamentoMapping : Profile
     public PagamentoMapping()
     {
         CreateMap<PagamentoCommand, Pagamento>()
+            .ForCtorParam("numeroContrato", opt => opt.MapFrom(src => src.NumeroContrato))
+            .ForCtorParam("preco", opt => opt.MapFrom(src => src.Preco))
+            .ForCtorParam("quantidade", opt => opt.MapFrom(src => src.Quantidade))
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.IdEstoque, opt => opt.Ignore());
     }
@@ -52,6 +55,13 @@ public class Pagamento
     public decimal Preco { get; set; }
     public int Quantidade { get; set; }
     public int IdEstoque { get; set; }
+
+    public Pagamento(string numeroContrato, decimal preco, int quantidade)
+    {
+        NumeroContrato = numeroContrato;
+        Preco = preco;
+        Quantidade = quantidade;
+    }
 }
 
 public record PagamentoCommand(string NumeroContrato, decimal Preco, int Quantidade);

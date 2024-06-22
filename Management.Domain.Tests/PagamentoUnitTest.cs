@@ -200,18 +200,19 @@ public class PagamentoControllerUnitTest
 
     public PagamentoControllerUnitTest()
     {
+        _command = _fixture.Create<PagamentoCommand>();
+
         _mockHandler = _fixture.Freeze<Mock<IPagamentoHandler>>();
         _mockValidator = _fixture.Freeze<Mock<IValidator<PagamentoCommand>>>();
 
         _fixture.Freeze<Mock<IPagamentoHandler>>()
-                .Setup(x => x.HandleAsync(It.IsAny<PagamentoCommand>(), _token))
-                .ReturnsAsync(new Pagamento());
+                .Setup(x => x.HandleAsync(_command, _token))
+                .ReturnsAsync(new Pagamento(_command.NumeroContrato, _command.Preco, _command.Quantidade));
 
         _fixture.Freeze<Mock<IValidator<PagamentoCommand>>>()
-                .Setup(x => x.ValidateAsync(It.IsAny<PagamentoCommand>(), _token))
+                .Setup(x => x.ValidateAsync(_command, _token))
                 .ReturnsAsync(new ValidationResult());
 
-        _command = _fixture.Create<PagamentoCommand>();
         _sut = _fixture.Build<PagamentoController>()
             .OmitAutoProperties()
             .Create();
@@ -223,20 +224,20 @@ public class PagamentoControllerUnitTest
         var result = await _sut.Post(_command, _token);
         var createdResult = (ObjectResult)result;
         createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
-        _mockHandler.Verify(x => x.HandleAsync(It.IsAny<PagamentoCommand>(), _token), Times.Once);
+        _mockHandler.Verify(x => x.HandleAsync(_command, _token), Times.Once);
     }
 
     [Fact]
     public async Task Dado_Commando_Invalido_Retorna_UnprocessableEntity()
     {
         _fixture.Freeze<Mock<IValidator<PagamentoCommand>>>()
-                .Setup(x => x.ValidateAsync(It.IsAny<PagamentoCommand>(), _token))
+                .Setup(x => x.ValidateAsync(_command, _token))
                 .ReturnsAsync(new ValidationResult(new[] { new ValidationFailure("any-prop", "any-error-message") }));
 
         var result = await _sut.Post(_command, _token);
         var createdResult = (BadRequestObjectResult)result;
         createdResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
-        _mockHandler.Verify(x => x.HandleAsync(It.IsAny<PagamentoCommand>(), _token), Times.Never);
+        _mockHandler.Verify(x => x.HandleAsync(_command, _token), Times.Never);
     }
 
     [Fact]
