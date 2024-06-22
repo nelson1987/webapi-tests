@@ -1,9 +1,14 @@
-﻿using AutoMapper;
+﻿using System.Net;
+
+using AutoMapper;
 
 using FluentValidation;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+
+using static Managemt.Api.UserAuthentication;
 
 namespace Managemt.Api.Features.Pagamentos;
 
@@ -136,14 +141,27 @@ public class PagamentoController : ControllerBase
         _validator = validator;
     }
 
+    public record LoginAccountCommand(string Username, string Password);
+
+    [AllowAnonymous]
+    [HttpGet("/token")]
+    public async Task<IActionResult> GetToken(CancellationToken cancellationToken = default)
+    {
+        var user = new User { Id = 1, Username = "Batman", Password = "Batman", Role = ManagerApiConstants.AuthorizationTypes.Manager };
+        var token = TokenService.GenerateToken(user);
+        return Ok(token);
+    }
+
+    [Authorize(Roles = ManagerApiConstants.AuthorizationTypes.Manager)]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] PagamentoCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
+            //var identity = (ClaimsIdentity?)User.Identity!;
             var validation = await _validator.ValidateAsync(command, cancellationToken);
             if (validation.IsInvalid())
-                return BadRequest(validation.ToModelState());
+                return ValidationProblem(modelStateDictionary: validation.ToModelState(), statusCode: (int)HttpStatusCode.BadRequest);
 
             Pagamento pagamento = await _pagamentoHandler.HandleAsync(command, cancellationToken);
             return Created($"/{pagamento.Id}", null);
@@ -167,5 +185,14 @@ public static class FluentValidationExtensions
             modelState.AddModelError(error.PropertyName, error.ErrorMessage);
         });
         return modelState;
+    }
+}
+
+public static class ManagerApiConstants
+{
+    public static class AuthorizationTypes
+    {
+        public const string Manager = "Manager";
+        public const string Employee = "Employee";
     }
 }
