@@ -8,16 +8,20 @@ Content-Type: application/json
 }
 ###
 
+GET {{Managemt.Api_HostAddress}}/pagamentos
+Content-Type: application/json
+###
+
 GET {{Managemt.Api_HostAddress}}/token
 Content-Type: application/json
 
 ###
 POST {{Managemt.Api_HostAddress}}/pagamentos
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkJhdG1hbiIsInJvbGUiOiJNYW5hZ2VyIiwibmJmIjoxNzE5MDk0NDY5LCJleHAiOjE3MTkxMDE2NjksImlhdCI6MTcxOTA5NDQ2OX0.59qwbazkkHBn-WLxAFGEJQ06idtUQC6ksGf6Jgvhp7s
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IkJhdG1hbiIsInJvbGUiOiJNYW5hZ2VyIiwibmJmIjoxNzE5MjM1Nzg5LCJleHAiOjE3MTkyNDI5ODksImlhdCI6MTcxOTIzNTc4OX0.uyS9CEA9IbLsbfklfG1gaFYe2XoWcLpLjn-5vYajGHs
 
 {
-    "NumeroContrato": "ACF",
+    "NumeroContrato": "",
     "Preco": 1.99,
     "Quantidade": 1
 }

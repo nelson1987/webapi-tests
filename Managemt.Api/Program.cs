@@ -1,4 +1,4 @@
-using Managemt.Api;
+using Managemt.Api.Services;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServices();

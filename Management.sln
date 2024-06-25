@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Managemt.Api", "Managemt.Ap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Management.Domain.Tests", "Management.Domain.Tests\Management.Domain.Tests.csproj", "{91B6A0DF-3ECD-47C3-94E4-B7F717E2A8CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Management.Benchmark", "Management.Benchmark\Management.Benchmark.csproj", "{0C6DE551-DDAC-4BD7-9F04-7EADF4DF8509}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Management.Benchmark", "Management.Benchmark\Management.Benchmark.csproj", "{0C6DE551-DDAC-4BD7-9F04-7EADF4DF8509}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
